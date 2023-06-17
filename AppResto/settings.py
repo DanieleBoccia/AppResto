@@ -17,6 +17,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'AppResto',
+    'reservation',
 ]
 
 MIDDLEWARE = [
@@ -53,7 +55,7 @@ WSGI_APPLICATION = 'AppResto.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'AppResto',
+        'NAME': 'appresto',
         'USER': 'root',
         'PASSWORD': 'Bestbqre1_',
         'HOST': 'localhost',
