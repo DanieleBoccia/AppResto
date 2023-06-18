@@ -43,7 +43,6 @@ class Customer(models.Model):
     address = models.CharField(max_length=200)
     city = models.CharField(max_length=100)
     country = models.CharField(max_length=100)
-    # Altri campi personalizzati del cliente
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
