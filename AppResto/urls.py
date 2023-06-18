@@ -17,10 +17,22 @@ Including another URLconf
 from django import views
 from django.contrib import admin
 from django.urls import include, path
+from django.contrib.auth import views as auth_views
 
 urlpatterns = [
+    #FUNZIONALITÀ APPLICAZIONE
     path('admin/', admin.site.urls),
     path('api/', include('reservation.urls')),
     path('restaurants/', views.RestaurantList.as_view(), name='restaurant-list'),
     path('reservations/', views.CreateReservation.as_view(), name='create-reservation'),
+    #aggiungi altre funzionalità...
+
+    #GESTIONE AUTENTICAZIONI
+    path('login/', auth_views.LoginView.as_view(), name='login'), # percorso autenticazione utente generico
+    path('logout/', auth_views.LogoutView.as_view(), name='logout'),
+    #aggiungi altri tipi di accesso...
+
+    #REGISTRAZIONE UTENTE
+    path('register/', views.register, name='register'), #registrazione utente generico
+    # aggiungi registrazioni personalizzate
 ]
