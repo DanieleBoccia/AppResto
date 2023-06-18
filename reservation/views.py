@@ -1,6 +1,7 @@
 from django.shortcuts import redirect, render, get_object_or_404
 from django.http import JsonResponse, HttpResponse
 from django.views import View
+from django.views.generic import ListView
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.contrib.auth import login, authenticate
@@ -14,20 +15,9 @@ from django.contrib.auth.forms import UserCreationForm
 
 
 ######## VISTE PER L'IMPLEMENTAZIONE DELLE FUNZIONALITÀ DELL'APP #######
-# View per la creazione di un nuovo ristorante
-class CreateRestaurant(View):
-    def post(self, request):
-        data = json.loads(request.body)
-        serializer = RestaurantSerializer(data=data)
-        
-        if serializer.is_valid():
-            serializer.save()
-            return JsonResponse(serializer.data, status=201)
-        
-        return JsonResponse(serializer.errors, status=400)
 
 # View per ottenere la lista dei ristoranti
-class RestaurantList(View):
+class RestaurantList(ListView):
     def get(self, request):
         restaurants = Restaurant.objects.all()
         serializer = RestaurantSerializer(restaurants, many=True)
@@ -42,6 +32,18 @@ class CreateReservation(View):
         if serializer.is_valid():
             serializer.save()
             return JsonResponse(serializer.data, status=201)
+        return JsonResponse(serializer.errors, status=400)
+    
+# View per la creazione di un nuovo ristorante
+class CreateRestaurant(View):
+    def post(self, request):
+        data = json.loads(request.body)
+        serializer = RestaurantSerializer(data=data)
+        
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse(serializer.data, status=201)
+        
         return JsonResponse(serializer.errors, status=400)
 
 #aggiungi altre funzionalità...
@@ -59,21 +61,6 @@ def protected_api_view(request):
 
 #aggiungi altri tipi di accesso
 
-
-
-######## VISTE PER LE REGISTRAZIONI ALL'APP ########
-# View per la registrazione dell'utente generico
-def register(request):
-    if request.method == 'POST':
-        form = UserCreationForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('login')  # Redireziona all'URL di login dopo la registrazione
-    else:
-        form = UserCreationForm()
-    return render(request, 'registration/register.html', {'form': form})
-
-#aggiungi altri tipi di registrazioni...
 
 
 

@@ -14,17 +14,19 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django import views
+
 from django.contrib import admin
 from django.urls import include, path
 from django.contrib.auth import views as auth_views
+from reservation.views import CreateReservation, CreateRestaurant, RestaurantList
+
 
 urlpatterns = [
     #FUNZIONALITÀ APPLICAZIONE
     path('admin/', admin.site.urls),
-    path('api/', include('reservation.urls')),
-    path('restaurants/', views.RestaurantList.as_view(), name='restaurant-list'),
-    path('reservations/', views.CreateReservation.as_view(), name='create-reservation'),
+    path('listrestaurants/', RestaurantList.as_view(), name='restaurant-list'),
+    path('reservations/', CreateReservation.as_view(), name='create-reservation'),
+    path('restaurants/', CreateRestaurant.as_view(), name = 'create-restaurant'),
     #aggiungi altre funzionalità...
 
     #GESTIONE AUTENTICAZIONI
@@ -32,7 +34,4 @@ urlpatterns = [
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     #aggiungi altri tipi di accesso...
 
-    #REGISTRAZIONE UTENTE
-    path('register/', views.register, name='register'), #registrazione utente generico
-    # aggiungi registrazioni personalizzate
 ]
