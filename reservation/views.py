@@ -14,6 +14,18 @@ from django.contrib.auth.forms import UserCreationForm
 
 
 ######## VISTE PER L'IMPLEMENTAZIONE DELLE FUNZIONALITÀ DELL'APP #######
+# View per la creazione di un nuovo ristorante
+class CreateRestaurant(View):
+    def post(self, request):
+        data = json.loads(request.body)
+        serializer = RestaurantSerializer(data=data)
+        
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse(serializer.data, status=201)
+        
+        return JsonResponse(serializer.errors, status=400)
+
 # View per ottenere la lista dei ristoranti
 class RestaurantList(View):
     def get(self, request):
