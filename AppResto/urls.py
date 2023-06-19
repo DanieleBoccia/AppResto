@@ -18,7 +18,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 from django.contrib.auth import views as auth_views
-from reservation.views import CreateReservation, CreateRestaurant, RestaurantList
+from reservation.views import CreateCustomerView, CreateReservation, CreateRestaurant, RestaurantList
 
 
 urlpatterns = [
@@ -27,6 +27,7 @@ urlpatterns = [
     path('listrestaurants/', RestaurantList.as_view(), name='restaurant-list'),
     path('reservations/', CreateReservation.as_view(), name='create-reservation'),
     path('restaurants/', CreateRestaurant.as_view(), name = 'create-restaurant'),
+    path('customer/', CreateCustomerView.as_view(), name = 'create-customer'),
     #aggiungi altre funzionalità...
 
     #GESTIONE AUTENTICAZIONI
