@@ -1,5 +1,5 @@
 from django.shortcuts import redirect, render, get_object_or_404
-from django.http import JsonResponse, HttpResponse
+from django.http import HttpResponseBadRequest, JsonResponse, HttpResponse
 from django.views import View
 from django.views.generic import ListView
 from django.views.decorators.csrf import csrf_exempt
@@ -17,6 +17,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 from django.views.generic.edit import CreateView
 from .forms import CustomerForm
+from geopy import distance
+from geopy import Point
 
 
 ######## VISTE PER L'IMPLEMENTAZIONE DELLE FUNZIONALITÀ DELL'APP #######
@@ -33,6 +35,8 @@ class RestaurantList(ListView):
         description = query_params.get('description')
         restaurant_type = query_params.get('restaurant_type')
         quarter = query_params.get('quarter')
+        user_latitude = request.GET.get('latitude', None)
+        user_longitude = request.GET.get('longitude', None)
 
         restaurants = Restaurant.objects.all()
 
@@ -56,6 +60,18 @@ class RestaurantList(ListView):
         
         if quarter:
             restaurants = restaurants.filter(quarter__icontains=quarter)
+        
+        #ricerca tramite geolocalizzazione
+        if user_latitude and user_longitude:
+          user_location = Point(latitude=float(user_latitude), longitude=float(user_longitude))
+          radius = 5  # Raggio di 5 chilometri
+          filtered_restaurants = []
+          for restaurant in restaurants:
+            restaurant_location = Point(latitude=restaurant.latitude, longitude=restaurant.longitude)
+            if distance.distance(user_location, restaurant_location).km <= radius:
+              filtered_restaurants.append(restaurant)
+          restaurants = filtered_restaurants
+
 
         serializer = RestaurantSerializer(restaurants, many=True)
         return JsonResponse(serializer.data, safe=False)
@@ -83,7 +99,129 @@ class CreateRestaurant(View):
             return JsonResponse(serializer.data, status=201)
         
         return JsonResponse(serializer.errors, status=400)
+
+# View per l'eliminazione del ristorante    
+@method_decorator(csrf_exempt, name='dispatch')
+class DeleteRestaurant(View):
+    def delete(self, request, restaurant_id):
+        try:
+            restaurant = Restaurant.objects.get(id=restaurant_id)
+            restaurant.delete()
+            return JsonResponse({'message': 'Restaurant deleted successfully.'}, status=204)
+        except Restaurant.DoesNotExist:
+            return JsonResponse({'error': 'Restaurant not found.'}, status=404)
+        
+# View per l'aggiornamento del ristorante
+@method_decorator(csrf_exempt, name='dispatch')
+class UpdateRestaurant(View):
+    def put(self, request, restaurant_id):
+        try:
+            restaurant = Restaurant.objects.get(id=restaurant_id)
+            data = json.loads(request.body)
+            serializer = RestaurantSerializer(restaurant, data=data)
+            
+            if serializer.is_valid():
+                serializer.save()
+                return JsonResponse(serializer.data, status=200)
+            
+            return JsonResponse(serializer.errors, status=400)
+        
+        except Restaurant.DoesNotExist:
+            return JsonResponse({'error': 'Restaurant not found.'}, status=404)
+        
+# View per la creazione di un nuovo tavolo
+@method_decorator(csrf_exempt, name='dispatch')
+class CreateTable(View):
+    def post(self, request):
+        data = json.loads(request.body)
+        serializer = TableSerializer(data=data)
+        
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse(serializer.data, status=201)
+        
+        return JsonResponse(serializer.errors, status=400)
+
+# View per l'eliminazione del tavolo    
+@method_decorator(csrf_exempt, name='dispatch')
+class DeleteTable(View):
+    def delete(self, request, table_id):
+        try:
+            table = Table.objects.get(id=table_id)
+            table.delete()
+            return JsonResponse({'message': 'Table deleted successfully.'}, status=204)
+        except Table.DoesNotExist:
+            return JsonResponse({'error': 'Table not found.'}, status=404)
+        
+# View per l'aggiornamento del tavolo
+@method_decorator(csrf_exempt, name='dispatch')
+class UpdateTable(View):
+    def put(self, request, table_id):
+        try:
+            table = Table.objects.get(id=table_id)
+            data = json.loads(request.body)
+            serializer = TableSerializer(table, data=data)
+            
+            if serializer.is_valid():
+                serializer.save()
+                return JsonResponse(serializer.data, status=200)
+            
+            return JsonResponse(serializer.errors, status=400)
+        
+        except Table.DoesNotExist:
+            return JsonResponse({'error': 'Table not found.'}, status=404)
+
+# View per ottenere lista tavoli associati al ristorante        
+class TableListView(ListView):
+    model = Table
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        # Ottenere l'ID del ristorante dai parametri dell'URL
+        restaurant_id = self.kwargs['restaurant_id']
+
+        # Filtrare i tavoli per l'ID del ristorante
+        queryset = queryset.filter(restaurant_id=restaurant_id)
+
+        # Verificare i parametri dell'URL per la disponibilità e la privacy
+        is_available = self.request.GET.get('available')
+        is_private = self.request.GET.get('private')
+
+        if is_available and is_private:
+            is_available = is_available.lower() == 'true'
+            is_private = is_private.lower() == 'true'
+            # Filtrare i tavoli per disponibilità e privacy
+            queryset = queryset.filter(is_available=is_available, is_private=is_private)
+        elif is_available:
+            is_available = is_available.lower() == 'true'
+            # Filtrare solo per disponibilità
+            queryset = queryset.filter(is_available=is_available)
+        elif is_private:
+            is_private = is_private.lower() == 'true'
+            # Filtrare solo per privacy
+            queryset = queryset.filter(is_private=is_private)
+
+        return queryset
+
+    def render_to_response(self, context, **response_kwargs):
+        # Serializzare i risultati in formato JSON
+        data = [{'table_number': table.table_number, 'capacity': table.capacity,  'description': table.description} for table in context['object_list']]
+        return JsonResponse(data, safe=False)
+
+    def dispatch(self, request, *args, **kwargs):
+        # Verificare se i parametri dell'URL sono validi
+        if 'available' in request.GET and request.GET['available'].lower() not in ['true', 'false']:
+            return HttpResponseBadRequest("Invalid value for 'available' parameter.")
+
+        if 'private' in request.GET and request.GET['private'].lower() not in ['true', 'false']:
+            return HttpResponseBadRequest("Invalid value for 'private' parameter.")
+
+        return super().dispatch(request, *args, **kwargs)
+
+
     
+
 # View per la creazione di un nuovo Customer
 @method_decorator(csrf_exempt, name='dispatch')
 class CreateCustomerView(LoginRequiredMixin, CreateView):

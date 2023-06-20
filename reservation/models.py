@@ -16,6 +16,8 @@ class Restaurant(models.Model):
     number_of_rooms = models.IntegerField(null=True, blank=True)
     description = models.TextField(null=True, blank=True)
     email = models.CharField(max_length=100, null=True, blank=True)
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -26,9 +28,14 @@ class Table(models.Model):
     restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE) # SE IL RISTORANTE VIENE ELIMINATO, VIENE ELIMINATO ANCHE IL TAVOLO
     table_number = models.CharField(max_length=20) 
     capacity = models.IntegerField() # Posti a sedere massimi per il tavolo
+    is_available = models.BooleanField(default=True)  # Indica se il tavolo è disponibile per prenotazioni
+    description = models.TextField(blank=True, null=True)  # Descrizione del tavolo
+    location = models.CharField(max_length=100, blank=True, null=True)  # Posizione del tavolo nel ristorante (es. "Interno", "Esterno")
+    is_private = models.BooleanField(default=True)  # Indica se il tavolo è privato o condiviso
+    image = models.ImageField(upload_to='table_images/', blank=True, null=True)  # Immagine del tavolo
 
     def __str__(self):
-        return f"Table {self.table_number} - Capacity: {self.capacity}" # ritorna il numero del tavolo e la sua capacità
+        return f"Table {self.table_number} - Capacity: {self.capacity} - Description {self.description}"
     
 # Tabella Menù (Chiave esterna Tabella Ristorante)
 

@@ -18,15 +18,28 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 from django.contrib.auth import views as auth_views
-from reservation.views import CreateCustomerView, CreateReservation, CreateRestaurant, RestaurantList
+from reservation.views import CreateCustomerView, CreateReservation, CreateRestaurant, CreateTable, DeleteRestaurant, DeleteTable, RestaurantList, TableListView, UpdateRestaurant, UpdateTable
+from geopy import distance
+from geopy import Point
 
 
 urlpatterns = [
     #FUNZIONALITÀ APPLICAZIONE
+    #tabella ristorante
     path('admin/', admin.site.urls),
     path('listrestaurants/', RestaurantList.as_view(), name='restaurant-list'),
-    path('reservations/', CreateReservation.as_view(), name='create-reservation'),
     path('restaurants/', CreateRestaurant.as_view(), name = 'create-restaurant'),
+    path('deleterestaurants/<int:restaurant_id>/', DeleteRestaurant.as_view(), name = 'delete-restaurant'),
+    path('updaterestaurants/<int:restaurant_id>/', UpdateRestaurant.as_view(), name = 'update-restaurant'),
+    
+    #tabella tavolo
+    path('tables/', CreateTable.as_view(), name = 'create-table'),
+    path('deletetable/<int:table_id>/', DeleteTable.as_view(), name = 'delete-table'),
+    path('updatetable/<int:table_id>/', UpdateTable.as_view(), name = 'update-table'),
+    path('listtable/<int:restaurant_id>/', TableListView.as_view(), name = 'table-list'),
+
+    path('reservations/', CreateReservation.as_view(), name='create-reservation'),
+    
     path('customer/', CreateCustomerView.as_view(), name = 'create-customer'),
     #aggiungi altre funzionalità...
 
