@@ -75,17 +75,6 @@ class RestaurantList(ListView):
 
         serializer = RestaurantSerializer(restaurants, many=True)
         return JsonResponse(serializer.data, safe=False)
-
-# View per creare una nuova prenotazione
-@method_decorator(csrf_exempt, name='dispatch')
-class CreateReservation(View):
-    def post(self, request):
-        data = json.loads(request.body)
-        serializer = ReservationSerializer(data=data)
-        if serializer.is_valid():
-            serializer.save()
-            return JsonResponse(serializer.data, status=201)
-        return JsonResponse(serializer.errors, status=400)
     
 # View per la creazione di un nuovo ristorante
 @method_decorator(csrf_exempt, name='dispatch')
@@ -218,9 +207,93 @@ class TableListView(ListView):
             return HttpResponseBadRequest("Invalid value for 'private' parameter.")
 
         return super().dispatch(request, *args, **kwargs)
-
-
     
+# View per la creazione di un nuovo menu
+class CreateMenu(View):
+    def post(self, request):
+        data = json.loads(request.body)
+        serializer = MenuSerializer(data=data)
+        
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse(serializer.data, status=201)
+        
+        return JsonResponse(serializer.errors, status=400)
+
+#View per l'aggiornamento del menu    
+class UpdateMenu(View):
+    def put(self, request, menu_id):
+        data = json.loads(request.body)
+        menu = Menu.objects.get(pk=menu_id)
+        serializer = MenuSerializer(menu, data=data)
+        
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse(serializer.data, status=200)
+        
+        return JsonResponse(serializer.errors, status=400)
+
+#View per la cancellazione di un menu    
+class DeleteMenu(View):
+    def delete(self, request, menu_id):
+        try:
+            menu = Menu.objects.get(pk=menu_id)
+            
+            # Controllo se è stata fornita l'opzione per eliminare tutto il menu
+            delete_all = request.GET.get('delete_all', False)
+            
+            if delete_all:
+                # Elimina tutto il menu del ristorante
+                restaurant_id = menu.restaurant_id
+                Menu.objects.filter(restaurant_id=restaurant_id).delete()
+                message = 'All menu items for the restaurant have been deleted.'
+            else:
+                # Elimina solo il menu specifico
+                menu.delete()
+                message = 'Menu item deleted successfully.'
+            
+            return JsonResponse({'message': message}, status=200)
+        except Menu.DoesNotExist:
+            return JsonResponse({'error': 'Menu not found'}, status=404)
+
+# View per filtrare i menu secondo le proprie esigenze
+class FilterMenuView(View):
+    def get(self, request, restaurant_id):
+        is_vegetarian = request.GET.get('vegetarian', False)
+        is_gluten_free = request.GET.get('gluten_free', False)
+        sort_by = request.GET.get('sort_by', None)
+        
+        menu_items = Menu.objects.filter(restaurant_id=restaurant_id)
+        
+        if is_vegetarian:
+            menu_items = menu_items.filter(is_vegetarian=True)
+        
+        if is_gluten_free:
+            menu_items = menu_items.filter(is_gluten_free=True)
+        
+        if sort_by == 'price_asc':
+            menu_items = menu_items.order_by('price')
+        elif sort_by == 'price_desc':
+            menu_items = menu_items.order_by('-price')
+        
+        data = {
+            'menu_items': list(menu_items.values())
+        }
+        
+        return JsonResponse(data, status=200)
+    
+
+# View per creare una nuova prenotazione
+@method_decorator(csrf_exempt, name='dispatch')
+class CreateReservation(View):
+    def post(self, request):
+        data = json.loads(request.body)
+        serializer = ReservationSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse(serializer.data, status=201)
+        return JsonResponse(serializer.errors, status=400)
+
 
 # View per la creazione di un nuovo Customer
 @method_decorator(csrf_exempt, name='dispatch')

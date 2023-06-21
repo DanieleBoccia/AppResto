@@ -2,9 +2,16 @@ from rest_framework import serializers
 from .models import Restaurant, Table, Menu, Customer, Reservation, Order, Payment, Review, Promotion, LoyaltyProgram
 
 class RestaurantSerializer(serializers.ModelSerializer):
+    available_tables = serializers.SerializerMethodField()
+
+    def get_available_tables(self, obj):
+        return Table.objects.filter(restaurant=obj, is_available=True).count()
+
     class Meta:
         model = Restaurant
         fields = '__all__'
+
+        available_tables = serializers.IntegerField()
 
 class TableSerializer(serializers.ModelSerializer):
     class Meta:

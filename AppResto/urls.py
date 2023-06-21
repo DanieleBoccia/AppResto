@@ -18,7 +18,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 from django.contrib.auth import views as auth_views
-from reservation.views import CreateCustomerView, CreateReservation, CreateRestaurant, CreateTable, DeleteRestaurant, DeleteTable, RestaurantList, TableListView, UpdateRestaurant, UpdateTable
+from reservation.views import CreateCustomerView, CreateMenu, CreateReservation, CreateRestaurant, CreateTable, DeleteMenu, DeleteRestaurant, DeleteTable, FilterMenuView, RestaurantList, TableListView, UpdateMenu, UpdateRestaurant, UpdateTable
 from geopy import distance
 from geopy import Point
 
@@ -38,9 +38,18 @@ urlpatterns = [
     path('updatetable/<int:table_id>/', UpdateTable.as_view(), name = 'update-table'),
     path('listtable/<int:restaurant_id>/', TableListView.as_view(), name = 'table-list'),
 
+    #tabella menu
+    path('menus/', CreateMenu.as_view(), name='create-menu'),
+    path('deletemenu/<int:menu_id>/', DeleteMenu.as_view(), name='delete-menu'),
+    path('updatemenu/<int:menu_id>/', UpdateMenu.as_view(), name='update-menu'),
+    path('listmenu/', FilterMenuView.as_view(), name='menu-list'),
+
+    # tabella reservations
     path('reservations/', CreateReservation.as_view(), name='create-reservation'),
     
+    #tabella customer
     path('customer/', CreateCustomerView.as_view(), name = 'create-customer'),
+    
     #aggiungi altre funzionalità...
 
     #GESTIONE AUTENTICAZIONI
